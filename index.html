@@ -1,43 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" />
   <link rel="stylesheet" href="css/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
   <title>Restaurant Reviews</title>
 </head>
 
 <body>
-  <header>
-    <nav>
+  <header role="banner">
+    <nav role="navigation">
       <h1><a href="/">Restaurant Reviews</a></h1>
     </nav>
   </header>
 
-  <main id="maincontent">
-    <section id="map-container">
-      <div id="map"></div>
+  <main id="maincontent" role="main">
+
+    <section tabindex="-1" id="map-container" role="region" aria-label="Google Map location of Restaurants">
+      <div id="map" role="presentation" ></div>
     </section>
-    <section>
+
+    <section role="region" aria-labelledby="filter">
       <div class="filter-options">
-        <h2>Filter Results</h2>
-        <select id="neighborhoods-select" name="neighborhoods" onchange="updateRestaurants()">
+        <h2 id="filter">Filter Options</h2>
+        <select id="neighborhoods-select" name="neighborhoods" aria-label="select neighborhoods" onchange="updateRestaurants();document.getElementById('restaurants-list').focus();">
           <option value="all">All Neighborhoods</option>
         </select>
-        <select id="cuisines-select" name="cuisines" onchange="updateRestaurants()">
+        <select id="cuisines-select" name="cuisines" aria-label="select cuisines" onchange="updateRestaurants();document.getElementById('restaurants-list').focus();">
           <option value="all">All Cuisines</option>
         </select>
       </div>
-      <ul id="restaurants-list"></ul>
+      <ul tabindex= "-1" id="restaurants-list" aria-label="Restaurant Result List" ></ul>
     </section>
   </main>
 
   <script type="application/javascript" charset="utf-8" src="js/dbhelper.js"></script>
   <script type="application/javascript" charset="utf-8" src="js/main.js"></script>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initMap"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDLSELzNStHDgl0DGAOTU6RK_9h6OZphR0&libraries=places&callback=initMap"></script>
+  <script>
 
+    //check for service worker and register
+    if (navigator.serviceWorker)
+      navigator.serviceWorker.register('/sw.js')
+        .then( (resp) => {
+          console.log("Service Worker Registerd Successfully!");
+        })
+        .catch((error) => {
+          console.log("Error Registering Service Worker. Please look into it")
+        });
+    else
+      console.log("Service Worker not supported");
 
-  <footer id="footer">
+    //check if we offline, then call updateRestaurants manually.
+    if(!navigator.onLine)
+      updateRestaurants();
+
+  </script>
+  <footer role="contentinfo" id="footer">
     Copyright (c) 2017 <a href="/"><strong>Restaurant Reviews</strong></a> All Rights Reserved.
   </footer>
 

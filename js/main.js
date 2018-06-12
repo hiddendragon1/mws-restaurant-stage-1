@@ -4,13 +4,16 @@ let restaurants,
 var map
 var markers = []
 
+
 /**
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
  */
 document.addEventListener('DOMContentLoaded', (event) => {
   fetchNeighborhoods();
   fetchCuisines();
+
 });
+
 
 /**
  * Fetch all neighborhoods and set their HTML.
@@ -137,10 +140,21 @@ fillRestaurantsHTML = (restaurants = self.restaurants) => {
  */
 createRestaurantHTML = (restaurant) => {
   const li = document.createElement('li');
+  li.setAttribute("tabindex",0);
+
+  // forming the small and medium image name
+  const imgNameArr = restaurant.photograph.split('.');
+  const imgSmall = imgNameArr[0].concat('-320_small','.',imgNameArr[1]);
+  const imgMedium = imgNameArr[0].concat('-480_medium','.',imgNameArr[1]);
 
   const image = document.createElement('img');
   image.className = 'restaurant-img';
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
+
+  //add srcset and sizes attribute to image
+  image.srcset = "/images/"+ imgSmall + " 320w," + "/images/"+ imgMedium + " 480w," +"/img/"+restaurant.photograph + " 800w" ;
+  image.sizes = "(min-width: 100px) and (max-width: 425px) 150px, (min-width: 600px) and (max-width: 716px) 500px, 250px";
+  image.alt = `${restaurant.name} restaurant picture`;
   li.append(image);
 
   const name = document.createElement('h1');
@@ -176,3 +190,7 @@ addMarkersToMap = (restaurants = self.restaurants) => {
     self.markers.push(marker);
   });
 }
+
+
+// window.addEventListener('load', registerServiceWorker());
+

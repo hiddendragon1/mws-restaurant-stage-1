@@ -9,13 +9,15 @@ window.initMap = () => {
     if (error) { // Got an error!
       console.error(error);
     } else {
-      self.map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 16,
-        center: restaurant.latlng,
-        scrollwheel: false
-      });
+      if(navigator.onLine)
+        self.map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 16,
+          center: restaurant.latlng,
+          scrollwheel: false
+        });
       fillBreadcrumb();
-      DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
+      if(navigator.onLine)
+        DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
     }
   });
 }
@@ -55,9 +57,27 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   const address = document.getElementById('restaurant-address');
   address.innerHTML = restaurant.address;
 
+  // forming the small image name
+  const imgNameArr = restaurant.photograph.split('.');
+  const imgSmall = imgNameArr[0].concat('-320_small','.',imgNameArr[1]);
+  const picture = document.getElementById('restaurant-picture');
+
+  // create source element and add small image source for responsive picture
+  const smallSource = document.createElement('source');
+  smallSource.media = "(min-width: 651px) and (max-width: 800px), (max-width: 350px)"
+  smallSource.srcset = "/images/"+ imgSmall;
+  picture.prepend(smallSource);
+
+  //responsive images for large image
+  const largeSource = document.createElement('source');
+  largeSource.media = "(min-width: 801px), (max-width: 650px) and (min-width: 550px)"
+  largeSource.srcset = "/img/"+restaurant.photograph;
+  picture.prepend(largeSource);
+
   const image = document.getElementById('restaurant-img');
   image.className = 'restaurant-img'
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
+  image.alt = `${restaurant.name} restaurant picture`;
 
   const cuisine = document.getElementById('restaurant-cuisine');
   cuisine.innerHTML = restaurant.cuisine_type;
@@ -77,6 +97,7 @@ fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => 
   const hours = document.getElementById('restaurant-hours');
   for (let key in operatingHours) {
     const row = document.createElement('tr');
+    row.setAttribute("tabindex",0);
 
     const day = document.createElement('td');
     day.innerHTML = key;
@@ -117,6 +138,8 @@ fillReviewsHTML = (reviews = self.restaurant.reviews) => {
  */
 createReviewHTML = (review) => {
   const li = document.createElement('li');
+  li.setAttribute("tabindex",0);
+
   const name = document.createElement('p');
   name.innerHTML = review.name;
   li.appendChild(name);

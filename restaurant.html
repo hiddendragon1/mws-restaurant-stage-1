@@ -1,56 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <!-- Normalize.css for better cross-browser consistency -->
   <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" />
   <!-- Main CSS file -->
   <link rel="stylesheet" href="css/styles.css" type="text/css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
   <title>Restaurant Info</title>
 </head>
 
 <body class="inside">
   <!-- Beginning header -->
-  <header>
+  <header role="banner">
     <!-- Beginning nav -->
-    <nav>
-      <h1><a href="/">Restaurant Reviews</a></h1>
+    <h1><a href="/">Restaurant Reviews</a></h1>
+    <nav role="navigation">
+      <!-- Beginning breadcrumb -->
+      <ul id="breadcrumb" >
+        <li><a href="/">Home</a></li>
+      </ul>
+      <!-- End breadcrumb -->
     </nav>
-    <!-- Beginning breadcrumb -->
-    <ul id="breadcrumb" >
-      <li><a href="/">Home</a></li>
-    </ul>
-    <!-- End breadcrumb -->
     <!-- End nav -->
   </header>
   <!-- End header -->
 
   <!-- Beginning main -->
-  <main id="maincontent">
-    <!-- Beginning map -->
-    <section id="map-container">
-      <div id="map"></div>
-    </section>
-    <!-- End map -->
+  <main id="maincontent" role="main">
     <!-- Beginning restaurant -->
-    <section id="restaurant-container">
-      <h1 id="restaurant-name"></h1>
-      <img id="restaurant-img">
-      <p id="restaurant-cuisine"></p>
+    <section tabindex="0" id="restaurant-container" role="region" aria-label="restaurant details">
+      <h1 tabindex="0" id="restaurant-name"></h1>
+      <picture id="restaurant-picture">
+        <img id="restaurant-img">
+      </picture>
+
+      <p tabindex="0" id="restaurant-cuisine"></p>
       <p id="restaurant-address"></p>
-      <table id="restaurant-hours"></table>
+      <table tabindex="0" id="restaurant-hours" aria-label="restaurant hours"></table>
     </section>
     <!-- end restaurant -->
     <!-- Beginning reviews -->
-    <section id="reviews-container">
+    <section tabindex="0" id="reviews-container" role="region">
       <ul id="reviews-list"></ul>
     </section>
     <!-- End reviews -->
+
+        <!-- Beginning map -->
+    <section tabindex="-1" id="map-container" role="region">
+      <div id="map" ></div>
+    </section>
+    <!-- End map -->
   </main>
   <!-- End main -->
 
   <!-- Beginning footer -->
-  <footer id="footer">
+  <footer id="footer" role="contentinfo">
     Copyright (c) 2017 <a href="/"><strong>Restaurant Reviews</strong></a> All Rights Reserved.
   </footer>
   <!-- End footer -->
@@ -61,8 +67,25 @@
   <!-- Main javascript file -->
   <script type="text/javascript" src="js/restaurant_info.js"></script>
   <!-- Google Maps -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_tKbW6A5pQ-eupxI56myUnHLqYCzOjKo&libraries=places&callback=initMap"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDLSELzNStHDgl0DGAOTU6RK_9h6OZphR0&libraries=places&callback=initMap"></script>
   <!-- End scripts -->
+  <script>
+    //check for service worker and register
+    if (navigator.serviceWorker)
+      navigator.serviceWorker.register('/sw.js')
+        .then( (resp) => {
+          console.log("Service Worker Registerd Successfully!");
+        })
+        .catch((error) => {
+          console.log("Error Registering Service Worker. Please look into it")
+        });
+    else
+      console.log("Service Worker not supported");
+
+    //check if we offline, then call initMap manually.
+    if(!navigator.onLine)
+      window.initMap();
+  </script>
 
 </body>
 
