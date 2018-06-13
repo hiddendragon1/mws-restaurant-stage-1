@@ -35,6 +35,7 @@ h1, h2, h3, h4, h5, h6 {
 article, aside, canvas, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
 	display: block;
 }
+
 #maincontent {
   background-color: #f3f3f3;
   min-height: 100%;
@@ -49,14 +50,11 @@ article, aside, canvas, details, figcaption, figure, footer, header, hgroup, men
   text-transform: uppercase;
 }
 
-
-
 /* ====================== Navigation ====================== */
 header {
   width: 100%;
-
-
 }
+
 header h1 {
   margin: auto;
   height: 100%;
@@ -268,9 +266,9 @@ header h1 a {
   padding: 30px 40px 80px;
 }
 
-#reviews-container h2 {
+#reviews-container h3 {
   color: #f58500;
-  font-size: 24pt;
+  font-size: 18pt;
   font-weight: 300;
   letter-spacing: -1px;
   padding-bottom: 1pt;
@@ -297,9 +295,7 @@ header h1 a {
   color: #666;
 }
 
-
 /* ====================== media queries ====================== */
-
 @media only screen and (min-width: 1062px) {
   #restaurants-list li {
     max-width: 25%;
@@ -319,12 +315,10 @@ header h1 a {
     font-size: 3vw;
   }
 
-  #reviews-container h2 {
-    font-size: 3.5vw;
+  #reviews-container h3 {
+    font-size: 3vw;
   }
 }
-
-
 
 @media only screen and (max-width: 650px) {
   .filter-options select {
@@ -364,7 +358,6 @@ header h1 a {
   }
 }
 
-
 @media only  screen and (max-width: 425px) {
   .filter-options select {
     width: 125px;
@@ -393,14 +386,11 @@ header h1 a {
     margin: 0 0 10px;
   }
 
-  #reviews-container h2 {
-    font-size: 6vw;
+  #reviews-container h3 {
+    font-size: 4.5vw;
   }
 
   body,td,th,p{
     font-size: 4vw;
   }
 }
-
-
-

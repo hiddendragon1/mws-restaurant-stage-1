@@ -15,7 +15,6 @@ self.addEventListener('install', event => {
       				'js/restaurant_info.js',
       				'index.html',
       				'/restaurant.html',
-              'http://localhost:8081/restaurant.html?id=1',
       				'img/1.jpg',
       				'img/2.jpg',
       				'img/3.jpg',
@@ -76,10 +75,18 @@ self.addEventListener('activate', event => {
  * Intercept requests and fetch them from cache first with network fallback
  */
 self.addEventListener('fetch', event => {
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request)
-      })
+    caches.open(staticCacheName).then(cache => {
+      return caches.match(event.request).then(response => {
+        return response || fetch(event.request).then(response => {
+          cache.put(event.request, response.clone());
+          return response;
+        })
+        .catch(error => {
+          console.log(error) //Promise.reject('no-match');
+        });
+      });
+    })
   );
 });

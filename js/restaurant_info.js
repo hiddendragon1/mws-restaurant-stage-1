@@ -9,15 +9,13 @@ window.initMap = () => {
     if (error) { // Got an error!
       console.error(error);
     } else {
-      if(navigator.onLine)
         self.map = new google.maps.Map(document.getElementById('map'), {
           zoom: 16,
           center: restaurant.latlng,
           scrollwheel: false
         });
       fillBreadcrumb();
-      if(navigator.onLine)
-        DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
+      DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
     }
   });
 }
@@ -116,7 +114,7 @@ fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => 
  */
 fillReviewsHTML = (reviews = self.restaurant.reviews) => {
   const container = document.getElementById('reviews-container');
-  const title = document.createElement('h2');
+  const title = document.createElement('h3');
   title.innerHTML = 'Reviews';
   container.appendChild(title);
 

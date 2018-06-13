@@ -19,7 +19,7 @@
   <main id="maincontent" role="main">
 
     <section tabindex="-1" id="map-container" role="region" aria-label="Google Map location of Restaurants">
-      <div id="map" role="presentation" ></div>
+      <div id="map" role="application"></div>
     </section>
 
     <section role="region" aria-labelledby="filter">
@@ -53,9 +53,6 @@
     else
       console.log("Service Worker not supported");
 
-    //check if we offline, then call updateRestaurants manually.
-    if(!navigator.onLine)
-      updateRestaurants();
 
   </script>
   <footer role="contentinfo" id="footer">

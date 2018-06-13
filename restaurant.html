@@ -16,7 +16,7 @@
   <header role="banner">
     <!-- Beginning nav -->
     <h1><a href="/">Restaurant Reviews</a></h1>
-    <nav role="navigation">
+    <nav role="navigation" aria-label="Breadcrumb">
       <!-- Beginning breadcrumb -->
       <ul id="breadcrumb" >
         <li><a href="/">Home</a></li>
@@ -31,7 +31,7 @@
   <main id="maincontent" role="main">
     <!-- Beginning restaurant -->
     <section tabindex="0" id="restaurant-container" role="region" aria-label="restaurant details">
-      <h1 tabindex="0" id="restaurant-name"></h1>
+      <h2 tabindex="0" id="restaurant-name"></h2>
       <picture id="restaurant-picture">
         <img id="restaurant-img">
       </picture>
@@ -48,8 +48,8 @@
     <!-- End reviews -->
 
         <!-- Beginning map -->
-    <section tabindex="-1" id="map-container" role="region">
-      <div id="map" ></div>
+    <section tabindex="-1" id="map-container" role="region"  aria-label="Google Map location of Restaurant">
+      <div id="map" role="application"></div>
     </section>
     <!-- End map -->
   </main>
@@ -81,10 +81,6 @@
         });
     else
       console.log("Service Worker not supported");
-
-    //check if we offline, then call initMap manually.
-    if(!navigator.onLine)
-      window.initMap();
   </script>
 
 </body>
