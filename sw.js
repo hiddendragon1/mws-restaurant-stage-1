@@ -1,5 +1,4 @@
 var staticCacheName = "mws-project-part1-v2";
-
 /**
  * Install service worker and cache assets
  */
@@ -10,6 +9,7 @@ self.addEventListener('install', event => {
       return cache.addAll([
       				'/',
       				'css/styles.css',
+              'js/idb.js',
       				'js/dbhelper.js',
       				'js/main.js',
       				'js/restaurant_info.js',
@@ -25,6 +25,7 @@ self.addEventListener('install', event => {
       				'img/8.jpg',
       				'img/9.jpg',
       				'img/10.jpg',
+              'img/not-available.jpg',
       				'images/1-320_small.jpg',
       				'images/1-480_medium.jpg',
       				'images/2-320_small.jpg',
@@ -45,7 +46,8 @@ self.addEventListener('install', event => {
       				'images/9-480_medium.jpg',
       				'images/10-320_small.jpg',
       				'images/10-480_medium.jpg',
-      				'data/restaurants.json',
+              'images/not-available-320_small.jpg',
+              'images/not-available-480_medium.jpg'
     	      ]);
     })
   );
@@ -76,17 +78,25 @@ self.addEventListener('activate', event => {
  */
 self.addEventListener('fetch', event => {
 
-  event.respondWith(
-    caches.open(staticCacheName).then(cache => {
-      return caches.match(event.request).then(response => {
-        return response || fetch(event.request).then(response => {
-          cache.put(event.request, response.clone());
-          return response;
-        })
-        .catch(error => {
-          console.log(error) //Promise.reject('no-match');
+  const url = new URL(event.request.url);
+  if(url.pathname == '/restaurant.html')
+    event.respondWith(
+      caches.match(event.request,{ignoreSearch:true}).then(response => {
+        return response;
+      })
+    );
+  else
+    event.respondWith(
+      caches.open(staticCacheName).then(cache => {
+        return caches.match(event.request).then(response => {
+          return response || fetch(event.request).then(response => {
+            cache.put(event.request, response.clone());
+            return response;
+          })
+          .catch(error => {
+            console.log(error) //Promise.reject('no-match');
+          });
         });
-      });
-    })
-  );
+      })
+    );
 });

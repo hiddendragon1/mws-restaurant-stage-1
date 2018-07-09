@@ -5,6 +5,7 @@ var map;
  * Initialize Google map, called from HTML.
  */
 window.initMap = () => {
+  registerServiceWorker();
   fetchRestaurantFromURL((error, restaurant) => {
     if (error) { // Got an error!
       console.error(error);
@@ -16,8 +17,27 @@ window.initMap = () => {
         });
       fillBreadcrumb();
       DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
+      google.maps.event.addListenerOnce(map, 'idle', () => {
+        document.getElementsByTagName('iframe')[0].title = "Google Maps";
+      });
     }
   });
+}
+
+registerServiceWorker = () => {
+  //check for service worker and register
+  if (navigator.serviceWorker) {
+    DBHelper.openIDB();
+    navigator.serviceWorker.register('/sw.js')
+      .then( (resp) => {
+        console.log("Service Worker Registerd Successfully!");
+      })
+      .catch((error) => {
+        console.log("Error Registering Service Worker. Please look into it")
+      });
+  }
+  else
+    console.log("Service Worker not supported");
 }
 
 /**
@@ -36,7 +56,7 @@ fetchRestaurantFromURL = (callback) => {
     DBHelper.fetchRestaurantById(id, (error, restaurant) => {
       self.restaurant = restaurant;
       if (!restaurant) {
-        console.error(error);
+        console.log(error);
         return;
       }
       fillRestaurantHTML();
@@ -55,9 +75,11 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   const address = document.getElementById('restaurant-address');
   address.innerHTML = restaurant.address;
 
+  if(!restaurant.photograph)
+    restaurant.photograph="not-available";
+
   // forming the small image name
-  const imgNameArr = restaurant.photograph.split('.');
-  const imgSmall = imgNameArr[0].concat('-320_small','.',imgNameArr[1]);
+  const imgSmall = restaurant.photograph.concat('-320_small.jpg');
   const picture = document.getElementById('restaurant-picture');
 
   // create source element and add small image source for responsive picture
@@ -69,7 +91,7 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   //responsive images for large image
   const largeSource = document.createElement('source');
   largeSource.media = "(min-width: 801px), (max-width: 650px) and (min-width: 550px)"
-  largeSource.srcset = "/img/"+restaurant.photograph;
+  largeSource.srcset = "/img/"+restaurant.photograph+".jpg";
   picture.prepend(largeSource);
 
   const image = document.getElementById('restaurant-img');

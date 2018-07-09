@@ -9,11 +9,30 @@ var markers = []
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
  */
 document.addEventListener('DOMContentLoaded', (event) => {
+
+  registerServiceWorker();
   fetchNeighborhoods();
   fetchCuisines();
 
 });
 
+
+registerServiceWorker = () => {
+  //check for service worker and register
+  if (navigator.serviceWorker) {
+    //open and create IDB
+    DBHelper.openIDB();
+    navigator.serviceWorker.register('/sw.js')
+    .then( (resp) => {
+      console.log("Service Worker Registerd Successfully!");
+    })
+    .catch((error) => {
+      console.log("Error Registering Service Worker. Please look into it")
+    });
+  }
+  else
+    console.log("Service Worker not supported");
+}
 
 /**
  * Fetch all neighborhoods and set their HTML.
@@ -84,6 +103,7 @@ window.initMap = () => {
     scrollwheel: false
   });
   updateRestaurants();
+
 }
 
 /**
@@ -133,6 +153,9 @@ fillRestaurantsHTML = (restaurants = self.restaurants) => {
     ul.append(createRestaurantHTML(restaurant));
   });
   addMarkersToMap();
+  google.maps.event.addListenerOnce(map, 'idle', () => {
+    document.getElementsByTagName('iframe')[0].title = "Google Maps";
+  });
 }
 
 /**
@@ -143,16 +166,19 @@ createRestaurantHTML = (restaurant) => {
   li.setAttribute("tabindex",0);
 
   // forming the small and medium image name
-  const imgNameArr = restaurant.photograph.split('.');
-  const imgSmall = imgNameArr[0].concat('-320_small','.',imgNameArr[1]);
-  const imgMedium = imgNameArr[0].concat('-480_medium','.',imgNameArr[1]);
+
+  if(!restaurant.photograph)
+    restaurant.photograph="not-available";
+
+  const imgSmall = restaurant.photograph.concat('-320_small.jpg');
+  const imgMedium = restaurant.photograph.concat('-480_medium.jpg');
 
   const image = document.createElement('img');
   image.className = 'restaurant-img';
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
 
   //add srcset and sizes attribute to image
-  image.srcset = "/images/"+ imgSmall + " 320w," + "/images/"+ imgMedium + " 480w," +"/img/"+restaurant.photograph + " 800w" ;
+  image.srcset = "/images/"+ imgSmall + " 320w," + "/images/"+ imgMedium + " 480w," +"/img/"+restaurant.photograph+".jpg" + " 800w" ;
   image.sizes = "(min-width: 100px) and (max-width: 425px) 150px, (min-width: 600px) and (max-width: 716px) 500px, 250px";
   image.alt = `${restaurant.name} restaurant picture`;
   li.append(image);
