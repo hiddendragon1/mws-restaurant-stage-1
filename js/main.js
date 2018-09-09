@@ -144,18 +144,60 @@ resetRestaurants = (restaurants) => {
   self.restaurants = restaurants;
 }
 
+toggleFavorite = (restaurant) => {
+
+  const favoriteIcon = document.getElementById('favoriteIcon-'+ `${restaurant.id}`);
+  const isFavorite = favoriteIcon.innerHTML== "favorite"? true: false
+
+  if(isFavorite) {
+    restaurant.is_favorite=false;
+    favoriteIcon.innerHTML = "favorite_border";
+  }
+  else {
+    restaurant.is_favorite=true;
+    favoriteIcon.innerHTML = "favorite";
+  }
+
+  DBHelper.updateRestaurantFavorite( restaurant, (error, response) => {
+    self.restaurant = response;
+    if(!response){
+      console.error(error);
+      return;
+    };
+  });
+}
+
 /**
  * Create all restaurants HTML and add them to the webpage.
  */
 fillRestaurantsHTML = (restaurants = self.restaurants) => {
   const ul = document.getElementById('restaurants-list');
-  restaurants.forEach(restaurant => {
-    ul.append(createRestaurantHTML(restaurant));
+
+  //get favorite restaurant and store the id
+  DBHelper.getFavoriteRestaurants((error, results) => {
+
+    if(!results) {
+      console.error(error);
+      return;
+    }
+
+    restaurants.forEach(restaurant => {
+      if(results.includes(restaurant.id))
+        restaurant.is_favorite=true;
+      else
+        restaurant.is_favorite=false;
+
+      ul.append(createRestaurantHTML(restaurant));
+      //add event listener for the favorite icon
+      document.getElementById(restaurant.id).addEventListener('click', () => toggleFavorite(restaurant));;
+    });
   });
+
   addMarkersToMap();
   google.maps.event.addListenerOnce(map, 'idle', () => {
     document.getElementsByTagName('iframe')[0].title = "Google Maps";
   });
+
 }
 
 /**
@@ -187,6 +229,16 @@ createRestaurantHTML = (restaurant) => {
   name.innerHTML = restaurant.name;
   li.append(name);
 
+  // add favorite icon to li list
+  const favoriteDiv = document.createElement('div');
+  const isFavorite = restaurant.is_favorite ? JSON.parse(restaurant.is_favorite) :false;
+  favoriteDiv.classList.add("favoriteToggle");
+  favoriteDiv.setAttribute("id", restaurant.id);
+  favoriteDiv.setAttribute("aria-label","toggle favorite");
+
+  favoriteDiv.innerHTML = `<i class='material-icons' alt='Favorite Icon' id='favoriteIcon-${restaurant.id}'>${isFavorite?"favorite":"favorite_border"}</i>`;
+  li.append(favoriteDiv);
+
   const neighborhood = document.createElement('p');
   neighborhood.innerHTML = restaurant.neighborhood;
   li.append(neighborhood);
@@ -198,9 +250,9 @@ createRestaurantHTML = (restaurant) => {
   const more = document.createElement('a');
   more.innerHTML = 'View Details';
   more.href = DBHelper.urlForRestaurant(restaurant);
-  li.append(more)
+  li.append(more);
 
-  return li
+  return li;
 }
 
 /**

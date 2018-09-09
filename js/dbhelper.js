@@ -1,5 +1,3 @@
-
-
 /**
  * Common database helper functions.
  */
@@ -14,14 +12,20 @@ class DBHelper {
    */
   static get DATABASE_URL() {
     const port = 1337 // Change this to your server port
-    return `http://localhost:${port}/restaurants`;
+    return `http://localhost:${port}/`;
   }
 
   static openIDB() {
-    this._dbPromise = idb.open("part2", 1 , function(upgradedb) {
-      const store = upgradedb.createObjectStore('part2', {
-        keyPath: 'id'
-      });
+    this._dbPromise = idb.open("part3", 1 , function(upgradedb) {
+      upgradedb.createObjectStore('restaurants', { keyPath: 'id'});
+      var restaurantStore = upgradedb.transaction.objectStore('restaurants');
+      restaurantStore.createIndex('is_favorite','is_favorite');
+
+      upgradedb.createObjectStore('reviews', { keyPath: 'id' });
+      var reviewStore = upgradedb.transaction.objectStore('reviews');
+      reviewStore.createIndex('restaurant_id', 'restaurant_id');
+
+      upgradedb.createObjectStore('syncReviews', {keyPath: 'createdAt'});
     });
   }
 
@@ -29,8 +33,8 @@ class DBHelper {
   static getRestaurantsFromDB(callback) {
     this._dbPromise.then(db => {
       if(!db) return;
-      const tx = db.transaction('part2', 'readwrite'); //open DB transaction for readwrite
-      const store = tx.objectStore('part2');    //get objectstore
+      const tx = db.transaction('restaurants', 'readwrite'); //open DB transaction for readwrite
+      const store = tx.objectStore('restaurants');    //get objectstore
       return store.getAll();
     })
     .then(restaurants => callback(null,restaurants))
@@ -38,27 +42,80 @@ class DBHelper {
   }
 
 
-  //put restaurant JSON to indexDB.
+  //store restaurant JSON to indexDB.
   static putRestaurantsToDB(restaurants) {
     this._dbPromise.then(db => {
       if(!db) return;
-      const tx = db.transaction('part2', 'readwrite');
-      const store = tx.objectStore('part2');
-      Array.isArray(restaurants) ? restaurants.forEach(restaurant => store.put(restaurant)): store.put(restaurants);
+      const tx = db.transaction('restaurants', 'readwrite');
+      const store = tx.objectStore('restaurants');
+      Array.isArray(restaurants) ? restaurants.forEach(restaurant => {
+        //store only if it updated at or not in indexDb
+        store.get(parseInt(restaurant.id)).then(temp =>{
+          if(!temp || restaurant.updatedAt > temp.updatedAt) {
+            store.put(restaurant);
+          }
+        });
+      }): store.put(restaurants);
     })
     .catch(error => console.log("Error Adding Restaurants to DB:", error));
   }
 
-  // static showCacheIDB() {
-  //   const
-  // }
+  //store restaurant JSON to indexDB.
+  static putReviewsToDB(reviews) {
+    this._dbPromise.then(db => {
+      if(!db) return;
+      const tx = db.transaction('reviews', 'readwrite');
+      const store = tx.objectStore('reviews');
+      Array.isArray(reviews) ? reviews.forEach(reviews => store.put(reviews)): store.put(reviews);
+    })
+    .catch(error => console.log("Error Adding Reviews to DB:", error));
+  }
+
+
+  //Save review to IDB offline for late
+  static saveReviews(review) {
+    this._dbPromise.then(db => {
+      if(!db) return;
+      const tx = db.transaction('syncReviews', 'readwrite');
+      const store = tx.objectStore('syncReviews');
+      store.put(review);
+    })
+    .catch(error => console.log("Error Saving Review to DB:", error));
+  }
+
+  //get review from DB for sync
+  static sendSavedReviews(callback) {
+    this._dbPromise.then(db => {
+      if(!db) return;
+      const tx = db.transaction('syncReviews', 'readwrite');
+      const store = tx.objectStore('syncReviews');
+      //open cursor to go through the review to send
+      return store.openCursor();
+    })
+    .then( function sendToServer(cursor) {
+
+        if (!cursor) return;
+        //post saved review to API
+        DBHelper.postRestaurantReview(cursor.value, (error,response) => {
+          if(!response)
+            console.error(error);
+        });
+        //delete saved review from IDB
+        cursor.delete();
+        return cursor.continue().then(sendToServer);
+
+    })
+    .catch(error => console.log("Error Saving Review to DB:", error));
+  }
+
   /**
    * Fetch all restaurants.
    */
   static fetchRestaurants(callback,id) {
 
-    //fetch restaurant by ID if id is passed else fetch all restaurants
-    const dataURL =id ? DBHelper.DATABASE_URL+`/${id}`: DBHelper.DATABASE_URL;
+     //fetch restaurant by ID if id is passed else fetch all restaurants
+    const RestaurantURL = DBHelper.DATABASE_URL + 'restaurants';
+    const dataURL =id ? `${RestaurantURL}/${id}`: RestaurantURL;
 
     //fetch api to get restaurant details from development server
     fetch(dataURL).then((response) => {
@@ -79,24 +136,164 @@ class DBHelper {
     });
   }
 
+  //Favorite and un_favorite a restaurant through API endpoint
+  static updateRestaurantFavorite(restaurant, callback) {
+    //form the URL
+    const url = `${DBHelper.DATABASE_URL}restaurants/${restaurant.id}/?is_favorite=${restaurant.is_favorite}`;
+
+    //call api to update favorite
+    fetch(url, { method: 'PUT' }).then((response) => {
+      if(response && response.status=== 200)
+        response.json().then(restaurants => {
+          //store favortie result json to idb store
+          DBHelper.putRestaurantsToDB(restaurants);
+          callback(null, restaurants);
+        });
+      else
+        callback('Error Updating Favorite', null);
+    });
+  }
+
+
+  //get favorite restaurants
+  static getFavoriteRestaurants(callback) {
+    const url = `${DBHelper.DATABASE_URL}restaurants/?is_favorite=true`;
+
+    //fetch favorite from DB is its there
+    this._dbPromise.then(db => {
+      if(!db) return;
+      const tx = db.transaction('restaurants');
+      const store = tx.objectStore('restaurants');
+      var reviewIndex = store.index('is_favorite');
+
+      return reviewIndex.getAll("true");
+    })
+    .then(favorites => {
+      //If reviews are found return it.
+      if(favorites.length > 0) {
+        const result = [];
+          for( let r of favorites) {
+            result.push(r.id);
+          }
+
+        callback(null,result);
+      }
+    else
+       //else fetch  and store favorite to indexDB if not there already
+      fetch(url).then((response) => {
+        if(response && response.status === 200)
+          response.json().then(restaurants => {
+            const result = [];
+            for( let r of restaurants) {
+              result.push(r.id);
+            }
+            DBHelper.putRestaurantsToDB(restaurants);
+            callback(null, result);
+          });
+        else
+          callback('No Favorites Found', null);
+        })
+        .catch( err => {
+          //if error then return error
+          const error = (`Request failed with following error: ${err}`);
+          callback(error, null);
+        });
+      });
+  }
+
+
+  //POST review method to server API through fetch
+  static postRestaurantReview(review,callback) {
+    const url = `${DBHelper.DATABASE_URL}reviews/`;
+    //fetch POST api url
+    fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+        },
+        body: JSON.stringify(review),
+    })
+    .then( (response) => {
+      //if got response
+      if(response && response.status === 201)
+        response.json().then(result => {
+          //store returned result to IDB
+          DBHelper.putReviewsToDB(result);
+          callback(null, result);
+        });
+      else
+        callback('Something went wrong', null);
+    })
+    .catch( err => {
+      //if error then return error
+      const error = (`Request failed with following error: ${err}`);
+      callback(error,null)
+    });;
+
+  }
+
+  //Fetch  reviews from API end point.
+  //Get from indexDB is available, if not fetch from api and store in indexDB.
+  static fetchRestaurantReviews(id,callback) {
+    var networkDataReceived = false;
+    //fetch reviews by restaurants id
+    const reviewURL = `${DBHelper.DATABASE_URL}reviews/?restaurant_id=${id}`;
+
+    var networkUpdate = fetch(reviewURL).then((response) => {
+      if(response && response.status === 200)
+        response.json().then(reviews => {
+          //store result json to idb store
+          DBHelper.putReviewsToDB(reviews);
+          networkDataReceived = true;
+          callback(null,reviews);
+        });
+      else
+        callback('No Reviews Found', null);
+      })
+      .catch( err => {
+        //if error then return error
+        const error = (`Request failed with following error: ${err}`);
+        callback(error, null);
+    });
+
+
+    //show cached result first
+    this._dbPromise.then(db => {
+      if(!db) return;
+      const tx = db.transaction('reviews');
+      const store = tx.objectStore('reviews');
+      var reviewIndex = store.index('restaurant_id');
+
+      return reviewIndex.getAll(parseInt(id));
+    })
+    .then(reviews => {
+      //If reviews are found return it first and before network return
+      if(reviews.length > 0 && !networkDataReceived) {
+        callback(null,reviews);
+      }
+    });
+
+  }
+
   /**
    * Fetch a restaurant by its ID.
    */
   static fetchRestaurantById(id, callback) {
 
-    //fetch from db if available
+    //fetch from iDB if available
     this._dbPromise.then(db => {
       if(!db) return;
-      const tx = db.transaction('part2');
-      const store = tx.objectStore('part2');
+      const tx = db.transaction('restaurants');
+      const store = tx.objectStore('restaurants');
 
       return store.get(parseInt(id));
     })
     .then(restaurant => {
-      if(restaurant)
+      if(restaurant) {
         callback(null,restaurant);
+      }
       else
-        //fetch from server if not available in DB
+        //fetch from server if not available in iDB
         DBHelper.fetchRestaurants((error, restaurants) => {
           if (error) {
             callback(error, null);

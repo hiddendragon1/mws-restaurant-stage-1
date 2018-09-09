@@ -8,9 +8,11 @@
   <!-- Main CSS file -->
   <link rel="stylesheet" href="css/styles.css" type="text/css">
   <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://maps.gstatic.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <meta name="theme-color" content="#317EFB"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="Description" content="Udacity Restaurant Review Project Part 2">
+  <meta name="Description" content="Udacity Restaurant Review Project Part 3">
   <title>Restaurant Info</title>
 </head>
 
@@ -35,6 +37,9 @@
     <!-- Beginning restaurant -->
     <section tabindex="0" id="restaurant-container" role="region" aria-label="restaurant details">
       <h2 tabindex="0" id="restaurant-name"></h2>
+      <div class="favoriteToggle" id="favorite" aria-label="toggle favourite" tabindex="0" >
+        <i class="material-icons" id="favoriteIcon" alt="favorite Icon">favorite_border</i>
+      </div>
       <picture id="restaurant-picture">
         <img id="restaurant-img">
       </picture>
@@ -46,6 +51,28 @@
     <!-- end restaurant -->
     <!-- Beginning reviews -->
     <section tabindex="0" id="reviews-container" role="region">
+      <form class="reviewBox" id="reviewForm" onsubmit="onSubmitReview(event);  return false;" role="dialog" arial-labelby="dialog-title" method="POST">
+        <h2 id="dialog-title">Submit A Review</h2>
+
+        <label for="name">Name:</label>
+        <input tabindex="0" required type="text" name="name" id="name" value="" />
+        </br>
+        <label for="rating">Rating:</label>
+        <select tabindex="0"  required type="number" name="rating" id="rating">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        </br>
+        <div class="commentField">
+          <label for="comments">Comments:</label>
+          <textarea tabindex="0" cols="30" rows="5" name="comments" id="comments" required value="write review of the restaurant here"></textarea>
+        </div>
+        </br>
+        <input type="submit" id="submitReview">
+      </form>
       <ul id="reviews-list"></ul>
     </section>
     <!-- End reviews -->
@@ -66,12 +93,11 @@
 
   <!-- Beginning scripts -->
   <!-- Database helpers -->
-  <script type="application/javascript" charset="utf-8" src="js/idb.js"></script>
-  <script type="text/javascript" src="js/dbhelper.js"></script>
+  <script type="application/javascript" charset="utf-8" src="js/db.min.js"></script>
   <!-- Main javascript file -->
-  <script type="text/javascript" src="js/restaurant_info.js"></script>
+  <script type="text/javascript" src="js/restaurant.min.js"></script>
   <!-- Google Maps -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDLSELzNStHDgl0DGAOTU6RK_9h6OZphR0&libraries=places&callback=initMap"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDri-BRLdcjb1Zfnu-iV5WkmFn95Hjp3xU&libraries=places&callback=initMap"></script>
   <!-- End scripts -->
 </body>
 

@@ -24,6 +24,7 @@
     "grunt-webp": "0.0.4"
   },
   "dependencies": {
+    "@material/icon-button": "^0.38.1",
     "gm": "^1.23.1",
     "idb": "^2.1.3"
   }

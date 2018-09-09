@@ -78,13 +78,31 @@ self.addEventListener('activate', event => {
  */
 self.addEventListener('fetch', event => {
 
+  //for non-get request
+  if (event.request.method != 'GET') return;
+
   const url = new URL(event.request.url);
+
   if(url.pathname == '/restaurant.html')
     event.respondWith(
       caches.match(event.request,{ignoreSearch:true}).then(response => {
         return response;
       })
     );
+  else if (url.searchParams.has('is_favorite') || url.searchParams.has('restaurant_id')) {
+    console.log(url.pathname);
+    event.respondWith(
+      caches.open(staticCacheName).then(cache => {
+        return fetch(event.request).then(response => {
+          cache.put(event.request, response.clone());
+          return response;
+        })
+        .catch(error => {
+          return caches.match(event.request);
+        });
+      })
+    );
+  }
   else
     event.respondWith(
       caches.open(staticCacheName).then(cache => {
@@ -99,4 +117,17 @@ self.addEventListener('fetch', event => {
         });
       })
     );
+});
+
+
+self.addEventListener("sync", event => {
+  if (event.tag == 'submitReviewSync') {
+    event.waitUntil(
+      clients.matchAll().then( clients => {
+        clients.forEach(client => {
+          client.postMessage({ action: 'submitReviews' })
+        });
+      })
+    )
+  }
 });
